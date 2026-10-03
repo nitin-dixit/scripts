@@ -8,9 +8,9 @@ exclude_ids=()
 sync_active=false
 notify_mode="none"
 wpctl_options=""
-pcolor="yellow"
-scolor="red"
-dflag="▶" # Default flag marker with stable size, that don't break alignment.
+pcolor=""
+scolor=""
+dflag="✓" # Default flag marker with stable size, that don't break alignment.
 valid_colors=(black red green yellow blue magenta cyan white)
 example_markers=(⟫ ■ ★ ⦿ ✪ ▶ ⋙ ⤐ ⋗ ⸭ ✠ ※)
 
@@ -236,14 +236,97 @@ done < <(
     printf "%s\t%s\t%s\n" "$i" "${sinks[$i]}" "${sinks[$i]//[^[:alnum:] ]/}"
   done | LC_ALL=C sort -t$'\t' -k3,3 | cut -f1-2
 )
+# ------------------------------------------------------------
+# Matugen theme
+# ------------------------------------------------------------
+
+MATUGEN_COLORS="$HOME/.local/state/quickshell/user/generated/colors.json"
+
+matugen_color() {
+  local name="$1"
+
+  if [[ -f "$MATUGEN_COLORS" ]] && command -v jq >/dev/null 2>&1; then
+    jq -r --arg name "$name" '
+      .[$name].default.hex // empty
+    ' "$MATUGEN_COLORS"
+  fi
+}
+
+# Material 3 semantic palette
+surface="$(matugen_color "surface")"
+surface_dim="$(matugen_color "surface_dim")"
+surface_container="$(matugen_color "surface_container")"
+
+on_surface="$(matugen_color "on_surface")"
+on_surface_variant="$(matugen_color "on_surface_variant")"
+
+primary="$(matugen_color "primary")"
+on_primary="$(matugen_color "on_primary")"
+
+primary_container="$(matugen_color "primary_container")"
+on_primary_container="$(matugen_color "on_primary_container")"
+
+secondary_container="$(matugen_color "secondary_container")"
+on_secondary_container="$(matugen_color "on_secondary_container")"
+
+outline="$(matugen_color "outline")"
+outline_variant="$(matugen_color "outline_variant")"
+
+# ------------------------------------------------------------
+# Fallbacks
+# ------------------------------------------------------------
+
+surface="${surface:-#000000}"
+surface_dim="${surface_dim:-#000000}"
+surface_container="${surface_container:-#111111}"
+
+on_surface="${on_surface:-#e6e1e5}"
+on_surface_variant="${on_surface_variant:-#cac4d0}"
+
+primary="${primary:-#d0bcff}"
+on_primary="${on_primary:-#381e72}"
+
+primary_container="${primary_container:-#4f378b}"
+on_primary_container="${on_primary_container:-#eaddff}"
+
+secondary_container="${secondary_container:-#4a4458}"
+on_secondary_container="${on_secondary_container:-#e8def8}"
+
+outline="${outline:-#938f99}"
+outline_variant="${outline_variant:-#49454f}"
 
 # Displays the fzf menu
 selected=$(printf '%s\n' "${fzf_input[@]}" | fzf \
   --delimiter='|' \
   --with-nth=2.. \
-  --color="prompt:${pcolor},fg+:${scolor}:bold" \
-  --prompt="✨ Hi, Nitin! Select audio output." \
-  --no-preview --disabled --layout=reverse --border=none --no-info \
+  --ansi \
+  --no-preview \
+  --disabled \
+  --layout=reverse \
+  --no-info \
+  --no-scrollbar \
+  --height=100% \
+  --border=rounded \
+  --border-label='  󰕾  Audio Output  ' \
+  --border-label-pos=0 \
+  --margin=1 \
+  --padding='1,2' \
+  --prompt='  󰕾  ' \
+  --pointer='▌' \
+  --marker='✓' \
+  --color="\
+fg:${on_surface},\
+bg:${surface},\
+fg+:${on_primary_container},\
+bg+:${primary_container},\
+prompt:${primary},\
+pointer:${primary},\
+marker:${primary},\
+border:${outline},\
+label:${primary},\
+query:${on_surface},\
+header:${on_surface_variant},\
+gutter:${surface}" \
   --bind "change:clear-query")
 
 [[ -z "$selected" ]] && exit 0 # user cancelled
